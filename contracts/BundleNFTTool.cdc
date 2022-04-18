@@ -16,6 +16,10 @@ pub contract BundleNFTTool {
             self.id = initID
             self.InsideNFTs  <- {}
         }
+
+        destroy() {
+            destroy self.InsideNFTs
+        }
     }
 
     // We define this interface purely as a way to allow users
@@ -32,7 +36,7 @@ pub contract BundleNFTTool {
         pub fun idExists(id: UInt64): Bool
 
         //BundleInside
-        pub fun queryBundleNFTIDs(id: UInt64): [UInt64]
+        pub fun getBundleNFTIDs(id: UInt64): [UInt64]
     }
 
     // The definition of the Collection resource that
@@ -40,11 +44,11 @@ pub contract BundleNFTTool {
     pub resource BundleNFTCollection: BundleNFTReceiver {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
-        pub var ownedNFTs: @{UInt64: BundleNFT}
+        pub var ownedBundleNFTs: @{UInt64: BundleNFT}
 
         // Initialize the NFTs field to an empty collection
         init () {
-            self.ownedNFTs <- {}
+            self.ownedBundleNFTs <- {}
         }
 
         // withdraw 
@@ -53,7 +57,7 @@ pub contract BundleNFTTool {
         // and moves it to the calling context
         pub fun withdraw(withdrawID: UInt64): @BundleNFT {
             // If the NFT isn't found, the transaction panics and reverts
-            let token <- self.ownedNFTs.remove(key: withdrawID)!
+            let token <- self.ownedBundleNFTs.remove(key: withdrawID)!
 
             return <-token
         }
@@ -65,41 +69,41 @@ pub contract BundleNFTTool {
         pub fun deposit(token: @BundleNFT) {
             // add the new token to the dictionary with a force assignment
             // if there is already a value at that key, it will fail and revert
-            self.ownedNFTs[token.id] <-! token
+            self.ownedBundleNFTs[token.id] <-! token
         }
 
         // idExists checks to see if a NFT 
         // with the given ID exists in the collection
         pub fun idExists(id: UInt64): Bool {
-            return self.ownedNFTs[id] != nil
+            return self.ownedBundleNFTs[id] != nil
         }
 
         // getIDs returns an array of the IDs that are in the collection
         pub fun getIDs(): [UInt64] {
-            return self.ownedNFTs.keys
+            return self.ownedBundleNFTs.keys
         }
 
 
         //Inside Bundle NFT Function
-        pub fun queryBundleNFTIDs(id: UInt64): [UInt64] {
-            return self.ownedNFTs[id].InsideNFTs.keys
+        pub fun getBundleNFTIDs(id: UInt64): [UInt64] {
+            return self.ownedBundleNFTs[id].InsideNFTs.keys
         }
 
         pub fun depositToBundle(token: @NonFungibleToken, id: UInt64) {
             // add the new token to the dictionary with a force assignment
             // if there is already a value at that key, it will fail and revert
-            self.ownedNFTs[id].InsideNFTs[token.id] <-! token
+            self.ownedBundleNFTs[id].InsideNFTs[token.id] <-! token
         }
 
         pub fun withdrawToBundle(withdrawID: UInt64, id: UInt64) {
             // If the NFT isn't found, the transaction panics and reverts
-            let token <- self.ownedNFTs[id].InsideNFTs.remove(key: withdrawID)!
+            let token <- self.ownedBundleNFTs[id].InsideNFTs.remove(key: withdrawID)!
 
             return <-token
         }
 
         destroy() {
-            destroy self.ownedNFTs
+            destroy self.ownedBundleNFTs
         }
     }
 
